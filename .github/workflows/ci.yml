@@ -1,0 +1,14 @@
+name: CI Workflow
+
+on:
+  pull_request
+
+jobs:
+  build:
+    runs-on: ubuntu-latest 
+    steps:
+      - name: build
+        run: cargo build
+      - name: run
+        run: cargo run
+      
