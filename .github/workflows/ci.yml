@@ -9,6 +9,8 @@ jobs:
     steps:
       - name: On récup le repo
         uses: actions/checkout@v4
+      - name: on se place au bon endroit
+        run: cd ./simeis
       - name: build
         run: cargo build --verbose --release
       
