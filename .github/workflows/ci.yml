@@ -9,8 +9,8 @@ jobs:
     steps:
       - name: On récup le repo
         uses: actions/checkout@v4
-      - name: on se place au bon endroit
-        run: cd /home/runner/work/ci-cd-game/ci-cd-game/simeis
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
       - name: build
-        run: cargo build --verbose --release
+        run: cd /home/runner/work/ci-cd-game/ci-cd-game/simeis && cargo build --verbose --release
       
