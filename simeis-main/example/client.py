@@ -1,6 +1,11 @@
 PORT=8080
-# URL=f"http://0.0.0.0:{PORT}"
-URL=f"http://103.45.247.164:{PORT}"
+URL=f"http://127.0.0.1:{PORT}"
+# URL=f"http://103.45.247.164:{PORT}"
+
+# Codes couleurs ANSI
+GREEN = "\033[42m  \033[0m"  # carré vert
+RED = "\033[41m  \033[0m"    # carré rouge
+GREY = "\033[47m  \033[0m"   # carré gris
 
 import os
 import sys
@@ -290,14 +295,60 @@ class Game:
         self.ship_repair(self.sid)
         self.ship_refuel(self.sid)
 
+    def get_market_prices(self):
+        market_prices = self.get(f"/market/prices")
+        return market_prices
+    
+    def get_fee_rate(self):
+        fee_rate = self.get(f"/market/{self.sta}/fee_rate")
+        print(f"[*] Current market fee rate: {round(fee_rate['fee_rate']*100, 2)} %")
+        return fee_rate
+    
+    def buy_resource(self, resource, amount):
+        self.get(f"/market/{self.sta}/buy/{resource}/{amount}")
+        print(f"[*] Ressource Bought : {resource}, for an amount of : {amount}")
+
+    def sell_resource(self, resource, amount):
+        self.get(f"/market/{self.sta}/sell/{resource}/{amount}")
+        print(f"[*] Ressource Sold : {resource}, for an amount of : {amount}")
+
+    def upgrade_trading_member(self):
+        self.get(f"/station/{self.sta}/crew/upgrade/trader")
+
 if __name__ == "__main__":
     name = sys.argv[1]
     game = Game(name)
     game.init_game()
 
     while True:
-        print("")
         game.disp_status()
         game.go_mine()
         game.disp_status()
         game.go_sell()
+        
+        '''''
+        market_prices = game.get_market_prices()
+
+        avg_prices = {
+            "Stone": 8.0, "Helium": 8.0,
+            "Iron": 32.0, "Ozone": 32.0,
+            "Copper": 92.0, "Freon": 92.0,
+            "Gold": 160.0, "Oxygen": 160.0,
+        }
+
+        os.system("clear")
+        fee_rate = game.get_fee_rate()
+
+        print("\n[*] Trading decisions:")
+        for resource, avg_price in avg_prices.items():
+            if resource not in market_prices["prices"]:
+                continue
+
+            real_price = float(market_prices["prices"][resource])
+            print(f"[*] Current market fee rate: {round(fee_rate['fee_rate']*100, 2)} %")
+            if real_price < avg_price * (1 - fee_rate["fee_rate"]):
+                print(f"{GREEN} Buying {resource} for {real_price:.3f} (below avg {avg_price})")
+            elif real_price > avg_price * (1 + fee_rate["fee_rate"]):
+                print(f"{RED} Selling {resource} for {real_price:.3f} (above avg {avg_price})")
+            else:
+                print(f"{GREY} Holding {resource} at {real_price:.3f} (around avg {avg_price})")'''
