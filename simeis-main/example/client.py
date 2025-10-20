@@ -156,6 +156,10 @@ class Game:
         self.get(f"/station/{self.sta}/crew/upgrade/trader")
         print("[*] Trading member upgraded.")
 
+    def upgrade_piloting_member(self):
+        self.get(f"/station/{self.sta}/crew/upgrade/pilot")
+        print("[*] Piloting member upgraded.")
+
     def go_mine(self):
         print("[*] Starting the Mining operation")
  
@@ -187,7 +191,6 @@ class Game:
  
         self.wait_idle(self.sid)
         print("[*] The cargo is full, stopping mining process")
-
     
     def go_sell(self):
         self.wait_idle(self.sid)
