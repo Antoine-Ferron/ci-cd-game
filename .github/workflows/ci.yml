@@ -7,6 +7,8 @@ jobs:
   build:
     runs-on: ubuntu-latest 
     steps:
+      - name: install rust
+        run: curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
       - name: build
         run: cargo build
       - name: run
