@@ -10,7 +10,7 @@ jobs:
       - name: On récup le repo
         uses: actions/checkout@v4
       - name: on se place au bon endroit
-        run: cd ./simeis
+        run: cd /home/runner/work/ci-cd-game/ci-cd-game/simeis
       - name: build
         run: cargo build --verbose --release
       
