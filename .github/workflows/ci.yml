@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults: 
       run:
-        working-directory: simeis
+        working-directory: ../simeis
     steps:
       - name: On récup le repo
         uses: actions/checkout@v4
