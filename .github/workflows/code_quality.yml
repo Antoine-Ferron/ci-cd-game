@@ -31,3 +31,9 @@ jobs:
 
       - name: Vérifier le formatage
         run: cargo fmt --check
+
+      - name: Installer cargo-tarpaulin pour la couverture
+        run: cargo install cargo-tarpaulin
+
+      - name: Vérifier la couverture avec cargo-tarpaulin
+        run: cargo tarpaulin
