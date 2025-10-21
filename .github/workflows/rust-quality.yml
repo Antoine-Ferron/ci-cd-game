@@ -17,3 +17,11 @@ jobs:
       - name: Verify compilation
         run: cargo check
         working-directory: ./simeis-main
+
+      - name: Run Clippy linter
+        run: cargo clippy --all-targets --all-features -- -D warnings
+        working-directory: ./simeis-main
+
+      - name: Verify formatting
+        run: cargo fmt --all -- --check
+        working-directory: ./simeis-main

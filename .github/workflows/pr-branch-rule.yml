@@ -8,3 +8,13 @@ jobs:
   check-branch-rules:
     name: "Check rule for branch"
     runs-on: ubuntu-latest
+
+    steps:
+      - name: "Check branch name"
+        run:
+          if [[ "${{ github.head_ref }}" != feature/* && "${{ github.head_ref }}" != bug/* && "${{ github.head_ref }}" != release/* ]]; then
+            echo "Branch name must start with 'feature/', 'bug/', or 'release/'."
+            exit 1
+          else
+            echo "Branch name is valid."
+          fi
