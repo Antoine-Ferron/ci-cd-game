@@ -35,12 +35,14 @@ jobs:
       - name: Vérifier les bonnes pratiques
         run: cargo clippy -- -D warnings
 
+      - name: Build server
+        run: cargo build --locked
+
       - name : Démarrer le server
-        run: | 
-            cargo run & 
+        run: ./target/debug/simeis-server &
 
       - name: Exécuter les tests
         run: pip install -r ../tests/requirement.txt && pytest ../tests/
 
       - name: Arrêter le server
-        run: pkill -f 'cargo run'
+        run: pkill -f simeis-server
