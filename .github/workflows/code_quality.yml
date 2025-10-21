@@ -35,5 +35,6 @@ jobs:
       - name: Installer cargo-tarpaulin pour la couverture
         run: cargo install cargo-tarpaulin
 
+#      return a xml file in simeis-data
       - name: Vérifier la couverture avec cargo-tarpaulin
-        run: cargo tarpaulin
+        run: cargo tarpaulin -o xml
