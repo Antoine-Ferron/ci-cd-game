@@ -5,6 +5,7 @@ on:
 
 jobs:
   build:
+    name: "Check build successfuly"
     runs-on: ubuntu-latest
     defaults: 
       run:
