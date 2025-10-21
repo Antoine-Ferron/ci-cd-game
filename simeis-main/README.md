@@ -1,5 +1,10 @@
 # Compiler
+## Avec Bazel
+```
+ bazel build //...
+```
 
+## Uniquement le server avec Cargo
 ```
 # Pour seulement compiler
 cargo build
