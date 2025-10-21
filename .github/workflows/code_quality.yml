@@ -36,4 +36,4 @@ jobs:
         run: cargo clippy -- -D warnings
 
       - name: Exécuter les tests
-        run: pip install -r ../tests/requirements.txt && pytest ../tests/
+        run: pip install -r ../tests/requirement.txt && pytest ../tests/
