@@ -15,7 +15,7 @@ jobs:
       - name: "Check branch name"
         run: |
           if [[ "$BRANCH_NAME" != feature/* && "$BRANCH_NAME" != bug/* && "$BRANCH_NAME" != release/* ]]; then
-            echo "Branch name must start with 'feature/', 'bug/', or 'release/'."
+            echo "Branch name must start with 'feature/', 'bug/', or 'release/'. Actual branch name: $BRANCH_NAME"
             exit 1
           else
             echo "Branch name is valid."
