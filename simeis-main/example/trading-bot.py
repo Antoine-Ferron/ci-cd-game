@@ -1,20 +1,22 @@
-# trading_bot.py
 import os
 import sys
 import time
 import math
+from datetime import datetime
+import sys
 
 from client import Game, GREEN, RED, GREY
 
-# Paramètres de risque
+# Dépenser maximum 3% de son cash à chaque tour
 MAX_CASH_SPEND_RATIO = 0.03
+# Vendre maximum 10% de son stock à chaque tour
 MAX_STOCK_SELL_RATIO = 0.10
 
-# Petit epsilon pour éviter problèmes de comparaison float
 EPS = 1e-9
 
 def safe_print(*args, **kwargs):
     print(*args, **kwargs)
+    sys.stdout.flush()
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
@@ -24,24 +26,25 @@ if __name__ == "__main__":
     game = Game(name)
     game.init_game()
 
+    total_profit = 0.0
+    loop_count = 0
+
     while True:
+        loop_count += 1
         try:
             os.system("clear")
         except Exception:
             pass
 
-        game.disp_status()
-        game.go_mine()
-        game.disp_status()
-        game.go_sell()
-        game.upgrade_piloting_member()
+        safe_print("\n" + "=" * 40)
+        safe_print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Trading round #{loop_count}")
+        safe_print("=" * 40)
 
-
-        '''
-        # Récupère les prix et le taux de frais
+        # Données marché + frais
         market_prices = game.get_market_prices()
-        fee_rate = game.get_fee_rate()  # {'fee_rate': 0.26} par ex
+        fee_rate = game.get_fee_rate()
 
+        # Prix moyens
         avg_prices = {
             "Stone": 8.0, "Helium": 8.0,
             "Iron": 32.0, "Ozone": 32.0,
@@ -49,100 +52,81 @@ if __name__ == "__main__":
             "Gold": 160.0, "Oxygen": 160.0,
         }
 
-        # Récupère l'état du joueur (crédits + inventaire station)
         player_status = game.get_player_status()
         credits = player_status["credits"]
-        inventory = player_status["inventory"]  # attention: inventaire côté joueur/station
+        inventory = player_status["inventory"]
 
-        # Upgrade du trader si on a assez
-        if credits > 5000:
+        # Stock de la station
+        try:
+            station_data = game.get(f"/station/{game.sta}")
+            station_cargo = station_data["cargo"]["resources"]
+        except Exception as e:
+            station_cargo = inventory
+            safe_print(f"[!] failed to fetch station cargo: {e}")
+
+        safe_print(f"Trader: {name} | Credits: {credits:,.2f} | Total Profit: {total_profit:+,.2f}")
+        safe_print(f"Market Fee: {fee_rate['fee_rate']*100:.2f}%")
+        safe_print("-" * 60)
+        safe_print("[*] Trading decisions:")
+
+        # Auto-upgrade si assez de crédits
+        if credits > 2500:
             try:
                 game.upgrade_trading_member()
             except Exception as e:
                 safe_print(f"[!] upgrade_trading_member failed: {e}")
 
-        # Trading uniquement si on n'a pas trop de crédits (comportement existant)
-        if credits < 15000:
-            safe_print("\n[*] Trading decisions:")
-            for resource, avg_price in avg_prices.items():
-                # si le marché n'a pas ce produit, skip
-                if resource not in market_prices["prices"]:
-                    continue
+        # Boucle principale
+        for resource, avg_price in avg_prices.items():
 
-                real_price = float(market_prices["prices"][resource])
-                diff_ratio = abs((real_price - avg_price) / avg_price) if avg_price != 0 else 0.0
-                trade_strength = min(max(diff_ratio * 2.5, 0.05), 0.6)
+            # Données du Market
+            real_price = float(market_prices["prices"][resource])
+            diff_ratio = abs((real_price - avg_price) / avg_price) if avg_price != 0 else 0.0
+            trade_strength = min(max(diff_ratio * 2.5, 0.05), 0.6)
+            max_spend = credits * MAX_CASH_SPEND_RATIO * trade_strength
+            max_buy_qty = max_spend / real_price if real_price > EPS else 0.0
+            have_qty = station_cargo.get(resource, 0)
 
-                # calcul d'achat maximal en quantité (en respectant le ratio de cash)
-                max_spend = credits * MAX_CASH_SPEND_RATIO * trade_strength
-                max_buy_qty = 0.0
-                if real_price > EPS:
-                    max_buy_qty = max_spend / real_price
-
-                # quantité disponible dans l'inventaire local (player_status)
-                stock_qty = inventory.get(resource, 0)
-
-                # quantité maximale qu'on peut vendre (ratio de stock * trade_strength)
-                max_sell_qty = stock_qty * MAX_STOCK_SELL_RATIO * trade_strength
-
-                # s'assurer que max_sell_qty ne dépasse pas ce qu'on a vraiment
-                max_sell_qty = min(max_sell_qty, stock_qty)
-
-                # --- BUY condition (en tenant compte des frais) ---
-                try:
-                    if real_price < avg_price * (1 - fee_rate["fee_rate"] - 1e-6):
-                        safe_print(f"{GREEN} BUY {resource} for {real_price:.3f} | avg={avg_price:.3f} | diff={diff_ratio:.2f} | qty={max_buy_qty:.2f}")
-                        if max_buy_qty > 0.0:
-                            try:
-                                game.buy_resource(resource, max_buy_qty)
-                                # après achat, on rafraîchit l'état pour garder l'info à jour
-                                player_status = game.get_player_status()
-                                credits = player_status["credits"]
-                                inventory = player_status["inventory"]
-                            except Exception as e:
-                                safe_print(f"    [!] buy_resource failed for {resource}: {e}")
-
-                    # --- SELL condition (vendre seulement si on a du stock) ---
-                    elif real_price > avg_price * (1 + fee_rate["fee_rate"] + 1e-6):
-                        # Récupérer le stock réel en station pour s'assurer (API station)
-                        try:
-                            station_cargo = game.get(f"/station/{game.sta}")["cargo"]["resources"]
-                        except Exception as e:
-                            station_cargo = inventory  # fallback
-                            safe_print(f"    [!] failed to fetch station cargo, using inventory fallback: {e}")
-
-                        station_stock = station_cargo.get(resource, 0)
-                        safe_print(f"{RED} SELL {resource} for {real_price:.3f} | avg={avg_price:.3f} | diff={diff_ratio:.2f} | planned_qty={max_sell_qty:.2f} | station_has={station_stock:.2f}")
-
-                        # Recalc max_sell_qty à partir du stock réel en station
-                        max_sell_qty = min(max_sell_qty, station_stock)
-                        if max_sell_qty <= 0:
-                            safe_print(f"    → nothing to sell for {resource} (station_has={station_stock})")
-                        else:
-                            try:
-                                game.sell_resource(resource, max_sell_qty)
-                                # après vente, rafraîchir l'état local
-                                player_status = game.get_player_status()
-                                credits = player_status["credits"]
-                                inventory = player_status["inventory"]
-                            except Exception as e:
-                                safe_print(f"    [!] sell_resource failed for {resource}: {e}")
-
-                    else:
-                        safe_print(f"{GREY} HOLD {resource} at {real_price:.3f} | avg={avg_price:.3f} | diff={diff_ratio:.2f}")
-
-                except Exception as e:
-                    # Catch-all pour éviter que le bot plante si un calcul lève une exception
-                    safe_print(f"[!] Unexpected error handling {resource}: {e}")
-
-            # affichage de statut et fee_rate
-            safe_print("")
             try:
-                game.disp_status()
+                # --- BUY ---
+                isCreditAbove1000 = credits > 1000
+                if real_price < avg_price * (1 - 0.15):
+                    safe_print(f"{GREEN if isCreditAbove1000 else GREY} {GREEN} BUY  {resource:<7} for {real_price:8.3f} | avg={avg_price:6.3f} | qty={max_buy_qty:8.2f} | have={have_qty:8.2f}")
+                    if isCreditAbove1000 and max_buy_qty > 0.0:
+                        try:
+                            game.buy_resource(resource, max_buy_qty)
+                            cost = real_price * max_buy_qty * (1 + fee_rate["fee_rate"])
+                            total_profit -= cost
+                        except Exception as e:
+                            safe_print(f"    [!] buy_resource failed: {e}")
+
+                # --- SELL ---
+                elif real_price > avg_price * (1 + 0.15):
+                    station_stock = station_cargo.get(resource, 0)
+                    price_diff = (real_price / avg_price) - 1
+                    k = 10.0
+                    min_threshold = fee_rate["fee_rate"] + 0.05
+                    sell_ratio = 1 - math.exp(-k * (price_diff - min_threshold)) if price_diff > min_threshold else 0.0
+                    sell_ratio = min(max(sell_ratio, 0.0), 1.0)
+                    max_sell_qty = station_stock * sell_ratio
+
+                    safe_print(f"{RED if max_sell_qty else GREY} {RED} SELL {resource:<7} for {real_price:8.3f} | avg={avg_price:6.3f} | have={station_stock:8.2f}")
+
+                    if max_sell_qty > 0:
+                        try:
+                            game.sell_resource(resource, max_sell_qty)
+                            revenue = real_price * max_sell_qty * (1 - fee_rate["fee_rate"])
+                            total_profit += revenue
+                        except Exception as e:
+                            safe_print(f"    [!] sell_resource failed: {e}")
+
+                # --- HOLD ---
+                else:
+                    safe_print(f"{GREY} {GREY} HOLD {resource:<7} at {real_price:8.3f} | avg={avg_price:6.3f} | diff={diff_ratio:5.2f} | have={have_qty:8.2f}")
+
             except Exception as e:
-                safe_print(f"[!] disp_status failed: {e}")
+                safe_print(f"[!] Unexpected error handling {resource}: {e}")
 
-            safe_print(f"[*] Current market fee rate: {round(fee_rate['fee_rate']*100, 2)} %")
+        safe_print("-" * 60)
+        safe_print(f"Current profit: {total_profit:+,.2f} credits | Fee rate: {fee_rate['fee_rate']*100:.2f}%")
 
-        else:
-            safe_print("[*] Credits >= 15000 — skipping trading this turn")'''

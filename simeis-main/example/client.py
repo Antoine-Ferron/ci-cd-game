@@ -146,11 +146,9 @@ class Game:
 
     def buy_resource(self, resource, amount):
         self.get(f"/market/{self.sta}/buy/{resource}/{amount}")
-        print(f"[*] Bought {amount:.2f} of {resource}")
 
     def sell_resource(self, resource, amount):
         self.get(f"/market/{self.sta}/sell/{resource}/{amount}")
-        print(f"[*] Sold {amount:.2f} of {resource}")
 
     def upgrade_trading_member(self):
         self.get(f"/station/{self.sta}/crew/upgrade/trader")
