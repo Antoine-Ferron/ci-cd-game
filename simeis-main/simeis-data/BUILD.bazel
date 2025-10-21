@@ -7,11 +7,14 @@ load("@crates//:defs.bzl", "all_crate_deps")
 # on déclare la librairie Rust pour simeis-data
 rust_library(
     name = "simeis-data",
+    visibility = ["//visibility:public"], # rendre la crate accessible aux autres packages Bazel
     srcs = glob(["src/**/*.rs"]),
 
     # le vrai nom du crate
     # (celui dans le 'name = "..."' de simeis-data/Cargo.toml)
-    crate_name = "simeis-data",
+    # bazel remplace les (-) par des (_) dans les noms de cibles
+    # donc indiquer le vrai nom du crate ici est important
+    crate_name = "simeis_data",
 
     # On connecte les dépendances externes
     deps = all_crate_deps(
