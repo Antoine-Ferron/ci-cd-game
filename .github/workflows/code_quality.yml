@@ -35,5 +35,8 @@ jobs:
       - name: Vérifier les bonnes pratiques
         run: cargo clippy -- -D warnings
 
+      - name : Démarrer le server
+        run: cargo build --locked
+
       - name: Exécuter les tests
         run: pip install -r ../tests/requirement.txt && pytest ../tests/
