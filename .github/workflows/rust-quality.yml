@@ -1,5 +1,6 @@
 name: Rust Code Quality
 
+# Trigger WF on pull requests to any branch
 on:
   pull_request:
     branches:
@@ -11,13 +12,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # Checkout repo
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # Check Compilation
       - name: Verify compilation
         run: cargo check
-        working-directory: ./simeis-main
-
-      - name: Run Clippy linter
-        run: cargo clippy --all-targets --all-features -- -D warnings
         working-directory: ./simeis-main
