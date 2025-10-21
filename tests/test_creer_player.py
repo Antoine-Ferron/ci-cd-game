@@ -3,7 +3,7 @@ import requests
 url = "http://localhost:8080"
 
 def test_user_creation():
-    response = requests.get(url + "/player/new/test_user_12")
+    response = requests.get(url + "/player/new/test_user_1")
     assert response.status_code == 200
 
     user = response.json()
