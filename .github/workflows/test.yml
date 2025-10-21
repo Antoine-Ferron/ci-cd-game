@@ -1,16 +1,13 @@
-name: Code Quality Check
+name: Execute functional tests on pull to main
 
 on:
   pull_request:
     branches:
-      - '**'
-  push:
-    branches:
-      - '**'
+      - 'main'
 
 jobs:
   cargo-quality:
-    name: Vérification de la qualité du code Rust
+    name: Execute functional tests
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -29,5 +26,14 @@ jobs:
       - name: Vérifier la compilation
         run: cargo check
 
-      - name: Vérifier le formatage
-        run: cargo fmt --check
+      - name: Build server
+        run: cargo build --locked
+
+      - name : Démarrer le server
+        run: ./target/debug/simeis-server &
+
+      - name: Exécuter les tests
+        run: pip install -r ../tests/requirement.txt && pytest ../tests/
+
+      - name: Arrêter le server
+        run: pkill -f simeis-server
