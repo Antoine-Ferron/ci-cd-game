@@ -1,5 +1,6 @@
 name: PR Branch Rules
 
+# Trigger WF on pull requests to any branch
 on:
   pull_request:
     types: [opened, edited, reopened, synchronize]
@@ -10,6 +11,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # Assume that branch name starts with :
       - name: "Check branch name"
         run: |
           if [[ "$BRANCH_NAME" != feature/* && "$BRANCH_NAME" != bug/* && "$BRANCH_NAME" != release/* ]]; then
