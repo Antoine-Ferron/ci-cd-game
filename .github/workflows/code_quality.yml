@@ -38,3 +38,16 @@ jobs:
 #      return a xml file in simeis-data
       - name: Vérifier la couverture avec cargo-tarpaulin
         run: cargo tarpaulin -o xml
+
+      - name: Extraire la couverture
+        id: coverage
+        run: |
+          rate=$(grep -oP '(?<=<coverage [^>]*line-rate=")[0-9\.]+' cobertura.xml | head -1)
+          echo "rate=$rate" >> $GITHUB_OUTPUT
+
+      - name: Créer un label selon le résultat
+        if: ${{ steps.coverage.outputs.rate < 0.50 }}
+        uses: actions-ecosystem/action-add-labels@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          labels: "not enough tests"
