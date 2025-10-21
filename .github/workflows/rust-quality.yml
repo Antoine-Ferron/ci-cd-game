@@ -1,0 +1,27 @@
+name: Rust Code Quality
+
+on:
+  pull_request:
+    branches:
+      - '**'
+
+jobs:
+  rust-quality:
+    name: Rust Quality Checks
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Verify compilation
+        run: cargo check
+
+      - name: Verify formatting
+        run: cargo fmt --all -- --check
+
+      - name: Run Clippy linter
+        run: cargo clippy --all-targets --all-features -- -D warnings
