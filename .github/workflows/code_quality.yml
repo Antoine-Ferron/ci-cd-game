@@ -36,7 +36,11 @@ jobs:
         run: cargo clippy -- -D warnings
 
       - name : Démarrer le server
-        run: cargo build --locked
+        run: | 
+            cargo run & 
 
       - name: Exécuter les tests
         run: pip install -r ../tests/requirement.txt && pytest ../tests/
+
+      - name: Arrêter le server
+        run: pkill -f 'cargo run'
