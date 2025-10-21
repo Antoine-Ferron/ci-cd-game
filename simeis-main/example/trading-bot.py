@@ -5,7 +5,7 @@ import math
 from datetime import datetime
 import sys
 
-#test 
+#testtttttt
 from client import Game, GREEN, RED, GREY
 
 # Dépenser maximum 3% de son cash à chaque tour
