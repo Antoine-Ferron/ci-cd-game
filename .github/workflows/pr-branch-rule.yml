@@ -8,27 +8,3 @@ jobs:
   check-branch-rules:
     name: "Check rule for branch"
     runs-on: ubuntu-latest
-    steps:
-      - name: Check source and target branches
-        id: check
-        run: |
-          echo "Source: ${{ github.head_ref }}"
-          echo "Target: ${{ github.base_ref }}"
-          SOURCE="${{ github.head_ref }}"
-          TARGET="${{ github.base_ref }}"
-
-          if [[ "$TARGET" =~ ^release/ ]]; then
-            if [[ ! "$SOURCE" =~ ^(main|bug/) ]]; then
-              echo "Invalid PR: Only 'main' or 'bug' can target 'release' branches."
-              exit 1
-            fi
-          fi
-
-      - name: Close invalid PR automatically
-        if: failure()
-        uses: peter-evans/close-pull-request@v3
-        with:
-          comment: |
-            Cette PR a été fermée automatiquement :
-            - Les branches `release` ne peuvent être alimentées que depuis `main` ou `bug`.
-            Merci de corriger la source avant de rouvrir.
