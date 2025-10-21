@@ -12,7 +12,9 @@ jobs:
   cargo-quality:
     name: Vérification de la qualité du code Rust
     runs-on: ubuntu-latest
-
+    defaults:
+      run:
+        working-directory: simeis-main
     steps:
       - name: Checkout du code
         uses: actions/checkout@v4
