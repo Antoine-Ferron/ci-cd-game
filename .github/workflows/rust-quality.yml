@@ -16,3 +16,4 @@ jobs:
 
       - name: Verify compilation
         run: cargo check
+        working-directory: ./simeis-main
