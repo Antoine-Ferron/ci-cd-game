@@ -5,7 +5,6 @@ import math
 from datetime import datetime
 import sys
 
-#testtttttt
 from client import Game, GREEN, RED, GREY
 
 # Maximum amount of cash to spend per round
