@@ -1,0 +1,32 @@
+#Outil de base permettant à bazel de DL des dépendances externes
+load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+
+# On télécharge les règles pour le langage Rust
+http_archive(
+    name = "rules_rust",
+    integrity = "sha256-5Kgp+5cZcrJoTOUq9CF6KJdNsB2zNzvYM9UnYMoY5lc=", # C'est le hash de la v0.66.0
+    urls = ["https://github.com/bazelbuild/rules_rust/releases/download/0.66.0/rules_rust-0.66.0.tar.gz"],
+)
+
+# on les charges
+load("@rules_rust//rust:repositories.bzl", "rust_register_toolchains")
+
+# on enregistre les toolchains Rust qu'on veut utiliser
+rust_register_toolchains(
+    edition = "2021",
+    versions = ["stable"],
+)
+
+# on improrte le module crates_repository pour gérer les dépendances Rust
+load("@rules_rust//crate_universe:repositories.bzl", "crates_repository")
+
+# on déclare les dépendances Rust à partir des fichiers Cargo.toml et Cargo.lock
+crates_repository(
+    name = "crates",
+    cargo_lockfile = "//:Cargo.lock",
+    manifests = [
+        "//:Cargo.toml",
+        "//simeis-data:Cargo.toml",
+        "//simeis-server:Cargo.toml",
+    ],
+)
