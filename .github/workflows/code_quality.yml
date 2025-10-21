@@ -1,0 +1,34 @@
+name: Code Quality Check
+
+on:
+  pull_request:
+    branches:
+      - '**'
+
+jobs:
+  cargo-quality:
+    name: Vérification de la qualité du code Rust
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout du code
+        uses: actions/checkout@v4
+
+      - name: Installer Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          components: clippy, rustfmt
+          override: true
+
+      - name: Vérifier la compilation
+        run: cargo check
+
+      - name: Vérifier le formatage
+        run: cargo fmt --check
+
+      - name: Vérifier les bonnes pratiques
+        run: cargo clippy -- -D warnings
+
+      - name: Exécuter les tests
+        run: pip install -r ../tests/requirements.txt && pytest ../tests/
