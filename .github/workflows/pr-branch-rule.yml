@@ -11,13 +11,11 @@ jobs:
 
     steps:
       - name: "Check branch name"
-        # On injecte la variable github.head_ref dans l'environnement du script
-        # sous le nom BRANCH_NAME
         env:
           BRANCH_NAME: ${{ github.head_ref }}
-        run: 
+        run: |
           echo "Checking branch name: [$BRANCH_NAME]"
-
+    
           if [[ "$BRANCH_NAME" != feature/* && "$BRANCH_NAME" != bug/* && "$BRANCH_NAME" != release/* ]]; then
             echo "Branch name must start with 'feature/', 'bug/', or 'release/'. Actual branch name: [$BRANCH_NAME]"
             exit 1
