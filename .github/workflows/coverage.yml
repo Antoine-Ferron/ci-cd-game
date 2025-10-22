@@ -20,14 +20,24 @@ jobs:
 
     steps:
       - name: Checkout du code
-        uses: actions/checkout@v4
+        run: |
+          git init
+          git remote add origin https://github.com/${{ github.repository }}.git
+          git fetch origin ${{ github.ref }}
+          git checkout FETCH_HEAD
 
       - name: Installer Rust
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          components: clippy, rustfmt
-          override: true
+        run: |
+          curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain stable
+          
+          source $HOME/.cargo/env
+          
+          rustup component add clippy rustfmt
+          
+          rustc --version
+          cargo --version
+          rustfmt --version
+          cargo clippy --version
 
       - name: Installer cargo-tarpaulin pour la couverture
         run: cargo install cargo-tarpaulin
