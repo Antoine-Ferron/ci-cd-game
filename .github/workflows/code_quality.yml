@@ -16,6 +16,17 @@ jobs:
       - name: On récup le repo
         uses: actions/checkout@v4
 
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            simeis-main/target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('simeis-main/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
