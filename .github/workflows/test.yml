@@ -26,18 +26,38 @@ jobs:
       - name: Install Bazel
         uses: bazelbuild/setup-bazelisk@v3
 
-      - name: Démarrer le server
-        run: bazel run //simeis-server:simeis-server &
-
-      - name: Attendre le server
+      - name: Démarrer le server (en arrière-plan)
         run: |
-          for i in {1..30}; do
+          echo "Démarrage du serveur..."
+          bazel run //simeis-server:simeis-server > server.log 2>&1 &
+          echo $! > server.pid
+
+      - name: Attendre que le server soit prêt (Health Check)
+        run: |
+          echo "Attente du serveur sur localhost:8080..."
+          timeout 30 bash -c 'until curl -s http://localhost:8080 > /dev/null; do
+            echo "En attente..."
             sleep 1
-            echo "waiting..."
-          done
+          done'
+          echo "Serveur prêt !"
 
       - name: Exécuter les tests
         run: pip install -r ../tests/requirement.txt && pytest ../tests/
 
+      - name: Afficher les logs du serveur (surtout si échec)
+        if: always()
+        run: |
+          echo "--- Début des logs du serveur ---"
+          cat server.log || echo "server.log non trouvé."
+          echo "--- Fin des logs du serveur ---"
+
       - name: Arrêter le server
-        run: pkill -f simeis-server
+        if: always()
+        run: |
+          echo "Arrêt du serveur..."
+          if [ -f server.pid ]; then
+            kill $(cat server.pid) || echo "Serveur déjà arrêté."
+          else
+            echo "Fichier PID non trouvé. Tentative avec pkill."
+            pkill -f simeis-server || echo "pkill a échoué ou serveur déjà arrêté."
+          fi
