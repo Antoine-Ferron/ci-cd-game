@@ -9,33 +9,25 @@ jobs:
   cargo-quality:
     name: Execute functional tests
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: simeis-main
+
     steps:
-      - name: Checkout du code
+      - name: On récup le repo
         uses: actions/checkout@v4
 
-      - name: Installer Rust
-        uses: actions-rs/toolchain@v1
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
         with:
-          toolchain: stable
-          components: clippy, rustfmt
-          override: true
+          toolchain: 1.90.0
 
-      - name: Vérifier la compilation
-        run: cargo check
+      - name: Install Bazel
+        uses: bazelbuild/setup-bazelisk@v3
 
-      - name: Build server
-        run: cargo build --locked
-
-      - name : Démarrer le server
-        run: ./target/debug/simeis-server &
+      - name: Démarrer le server
+        run: bazel run //simeis-server:simeis-server &
 
       - name: Attendre le server
         run: |
           for i in {1..30}; do
-            # Exemple: remplacer par une vraie vérification (curl http://127.0.0.1:8080/health)
             sleep 1
             echo "waiting..."
           done
