@@ -3,7 +3,7 @@ name: Build Matrix
 on:
   pull_request:
     branches:
-      - [cite_start]'main' # Se déclenche sur les PR qui ciblent 'main' [cite: 120]
+      - 'main'
 
 jobs:
   build-matrix:
