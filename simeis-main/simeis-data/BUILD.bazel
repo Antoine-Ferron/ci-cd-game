@@ -28,11 +28,12 @@ rust_library(
 rust_test(
     name = "unit_tests",
 
-    deps = [":simeis-data"] + all_crate_deps(normal = True),
+    srcs = glob(["src/**/*.rs"]),
 
+    crate_name = "simeis_data",
+
+    deps = all_crate_deps(normal = True),
     proc_macro_deps = all_crate_deps(proc_macro = True),
-
-    rustc_flags = ["--test"],
 
     edition = "2021",
 )
