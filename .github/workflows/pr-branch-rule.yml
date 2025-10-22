@@ -15,8 +15,7 @@ jobs:
         # sous le nom BRANCH_NAME
         env:
           BRANCH_NAME: ${{ github.head_ref }}
-        run: |
-          # Ajout d'un echo pour vérifier la valeur
+        run: 
           echo "Checking branch name: [$BRANCH_NAME]"
 
           if [[ "$BRANCH_NAME" != feature/* && "$BRANCH_NAME" != bug/* && "$BRANCH_NAME" != release/* ]]; then
