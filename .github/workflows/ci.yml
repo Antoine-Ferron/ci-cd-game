@@ -10,6 +10,10 @@ jobs:
     name: "Build release binary and doc"
     runs-on: ubuntu-latest
 
+    defaults:
+      run:
+        working-directory: simeis-main
+
     steps:
       - name: On récup le repo
         uses: actions/checkout@v4
