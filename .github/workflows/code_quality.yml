@@ -37,7 +37,7 @@ jobs:
             bazel-v1-${{ runner.os }}-
 
       - name: Lancer les tests unitaires
-        run: bazel test //simeis-data:simeis-data_test
+        run: bazel test //simeis-data:simeis-data
 
       - name: Vérifier le formatage (fmt)
         run: bazel test @crates//:cargo-fmt
