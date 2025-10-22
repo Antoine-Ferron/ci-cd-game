@@ -28,9 +28,9 @@ jobs:
 
       - name: Récupérer le chemin du cache Bazel
         id: bazel-cache
-        run: echo "dir=$(bazel info output_base)/external" >> $GITHUB_OUTPUT
+        run: echo "dir=$(bazel info output_base)" >> $GITHUB_OUTPUT
 
-      - name: Mettre en cache les dépendances Bazel
+      - name: Mettre en cache Bazel (artefacts + repos)
         uses: actions/cache@v4
         with:
           path: ${{ steps.bazel-cache.outputs.dir }}
