@@ -1,0 +1,33 @@
+name: Code Quality Check
+
+on:
+  pull_request:
+    branches:
+      - '**'
+  push:
+    branches:
+      - '**'
+
+jobs:
+  cargo-quality:
+    name: Vérification de la qualité du code Rust
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: simeis-main
+    steps:
+      - name: Checkout du code
+        uses: actions/checkout@v4
+
+      - name: Installer Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          components: clippy, rustfmt
+          override: true
+
+      - name: Vérifier la compilation
+        run: cargo check
+
+      - name: Vérifier le formatage
+        run: cargo fmt --check

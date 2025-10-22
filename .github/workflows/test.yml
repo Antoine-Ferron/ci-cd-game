@@ -1,0 +1,39 @@
+name: Execute functional tests on pull to main
+
+on:
+  pull_request:
+    branches:
+      - 'main'
+
+jobs:
+  cargo-quality:
+    name: Execute functional tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: simeis-main
+    steps:
+      - name: Checkout du code
+        uses: actions/checkout@v4
+
+      - name: Installer Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          components: clippy, rustfmt
+          override: true
+
+      - name: Vérifier la compilation
+        run: cargo check
+
+      - name: Build server
+        run: cargo build --locked
+
+      - name : Démarrer le server
+        run: ./target/debug/simeis-server &
+
+      - name: Exécuter les tests
+        run: pip install -r ../tests/requirement.txt && pytest ../tests/
+
+      - name: Arrêter le server
+        run: pkill -f simeis-server
