@@ -42,4 +42,4 @@ jobs:
         run: bazel build -c opt //simeis-server:stripped_release
 
       - name: Build documentation
-        run: bazel build //doc:manual
+        run: bazel build //doc:compile_manual
