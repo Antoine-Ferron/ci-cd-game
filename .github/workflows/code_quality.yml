@@ -42,13 +42,15 @@ jobs:
       - name: Extraire la couverture
         id: coverage
         run: |
-          rate=$(grep -oP '(?<=<coverage [^>]*line-rate=")[0-9\.]+' cobertura.xml | head -1)
+          rate=$(grep -oP '<coverage[^>]*line-rate="([+-]?(?=\.\d|\d)(?:\d+)?(?:\.?\d*)(?:[Ee][+-]?\d+)?)"[^>]*>' cobertura.xml | head -1)
           echo "rate=$rate" >> $GITHUB_OUTPUT
 
       - name: Créer un label selon le résultat
         if: ${{ steps.coverage.outputs.rate < 0.50 }}
-        uses: actions-ecosystem/action-add-labels@v1
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          labels: "not enough tests"
-          number: ${{ github.event.issue.number }}
+        run: gh issue edit "$NUMBER" --add-label "$LABELS"
+#        uses: actions-ecosystem/action-add-labels@v1
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          NUMBER: ${{ github.event.issue.number }}
+          LABELS: "not enough tests"
