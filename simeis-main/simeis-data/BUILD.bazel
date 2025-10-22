@@ -1,6 +1,5 @@
 # on charge les règles Bazel pour les librairies Rust
-load("@rules_rust//rust:defs.bzl", "rust_library")
-
+load("@rules_rust//rust:defs.bzl", "rust_library", "rust_test")
 # charge les macros généré par crates_repository
 load("@crates//:defs.bzl", "all_crate_deps")
 
@@ -24,4 +23,14 @@ rust_library(
         proc_macro = True,
     ),
     edition = "2021", # Doit être identique a l'édition déclaré dans WORKSPACE.bazel
+)
+
+rust_test(
+    name = "unit_tests",
+
+    crate_root = "src/lib.rs",
+
+    deps = [":simeis-data"] + all_crate_deps(normal = True),
+    proc_macro_deps = all_crate_deps(proc_macro = True),
+    edition = "2021",
 )
