@@ -9,39 +9,70 @@ jobs:
   cargo-quality:
     name: Execute functional tests
     runs-on: ubuntu-latest
+
     defaults:
       run:
         working-directory: simeis-main
+
     steps:
-      - name: Checkout du code
+      - name: On récup le repo
         uses: actions/checkout@v4
 
-      - name: Installer Rust
-        uses: actions-rs/toolchain@v1
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
         with:
-          toolchain: stable
-          components: clippy, rustfmt
-          override: true
+          toolchain: 1.90.0
 
-      - name: Vérifier la compilation
-        run: cargo check
+      - name: Install Bazel
+        uses: bazelbuild/setup-bazelisk@v3
 
-      - name: Build server
-        run: cargo build --locked
+      - name: Récupérer le chemin du cache Bazel
+        id: bazel-cache
+        run: echo "dir=$(bazel info output_base)" >> $GITHUB_OUTPUT
 
-      - name : Démarrer le server
-        run: ./target/debug/simeis-server &
+      - name: Mettre en cache Bazel (artefacts + repos)
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.bazel-cache.outputs.dir }}
+          key: bazel-v1-${{ runner.os }}-${{ hashFiles('**/MODULE.bazel.lock', '**/Cargo.lock') }}
+          restore-keys: |
+            bazel-v1-${{ runner.os }}-
 
-      - name: Attendre le server
+      - name: Compiler le serveur
+        run: bazel build //simeis-server:simeis-server
+
+      - name: Démarrer le server (en arrière-plan)
         run: |
-          for i in {1..30}; do
-            # Exemple: remplacer par une vraie vérification (curl http://127.0.0.1:8080/health)
+          echo "Démarrage du binaire compilé..."
+          ./bazel-bin/simeis-server/simeis-server > server.log 2>&1 &
+          echo $! > server.pid
+
+      - name: Attendre que le server soit prêt (Health Check)
+        run: |
+          echo "Attente du serveur sur localhost:8080..."
+          timeout 60 bash -c 'until curl -s http://localhost:8080 > /dev/null; do
+            echo "En attente..."
             sleep 1
-            echo "waiting..."
-          done
+          done'
+          echo "Serveur prêt !"
 
       - name: Exécuter les tests
         run: pip install -r ../tests/requirement.txt && pytest ../tests/
 
+      - name: Afficher les logs du serveur
+        if: always()
+        run: |
+          echo "--- Début des logs du serveur ---"
+          cat server.log || echo "server.log non trouvé."
+          echo "--- Fin des logs du serveur ---"
+
       - name: Arrêter le server
-        run: pkill -f simeis-server
+        if: always()
+        run: |
+          echo "Arrêt du serveur..."
+          if [ -f server.pid ]; then
+            kill $(cat server.pid) || echo "Serveur déjà arrêté."
+          else
+            echo "Fichier PID non trouvé. Tentative avec pkill."
+            pkill -f simeis-server || echo "pkill a échoué ou serveur déjà arrêté."
+          fi

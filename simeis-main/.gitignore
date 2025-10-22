@@ -4,3 +4,8 @@ result
 *.zip
 .~lock.*.ods#
 scores.json
+/bazel-bin/
+/bazel-out/
+/bazel-simeis-main/
+/bazel-testlogs/
+

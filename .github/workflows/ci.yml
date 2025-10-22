@@ -1,20 +1,45 @@
-name: CI Workflow
+name: Build Release Assets
 
 on:
-  pull_request
+  push:
+    branches:
+      - 'main'
 
 jobs:
   build:
-    name: "Check build successfuly"
+    name: "Build release binary and doc"
     runs-on: ubuntu-latest
-    defaults: 
+
+    defaults:
       run:
         working-directory: simeis-main
+
     steps:
       - name: On récup le repo
         uses: actions/checkout@v4
+
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
-      - name: build
-        run: cargo build --verbose --release
-      
+        with:
+          toolchain: 1.90.0
+
+      - name: Install Bazel
+        uses: bazelbuild/setup-bazelisk@v3
+
+      - name: Récupérer le chemin du cache Bazel
+        id: bazel-cache
+        run: echo "dir=$(bazel info output_base)" >> $GITHUB_OUTPUT
+
+      - name: Mettre en cache Bazel (artefacts + repos)
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.bazel-cache.outputs.dir }}
+          key: bazel-v1-${{ runner.os }}-${{ hashFiles('**/MODULE.bazel.lock', '**/Cargo.lock') }}
+          restore-keys: |
+            bazel-v1-${{ runner.os }}-
+
+      - name: Build stripped release binary
+        run: bazel build -c opt //simeis-server:stripped_release
+
+      - name: Build documentation
+        run: bazel build //doc:manual
