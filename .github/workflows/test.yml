@@ -32,6 +32,14 @@ jobs:
       - name : Démarrer le server
         run: ./target/debug/simeis-server &
 
+      - name: Attendre le server
+        run: |
+          for i in {1..30}; do
+            # Exemple: remplacer par une vraie vérification (curl http://127.0.0.1:8080/health)
+            sleep 1
+            echo "waiting..."
+          done
+
       - name: Exécuter les tests
         run: pip install -r ../tests/requirement.txt && pytest ../tests/
 
