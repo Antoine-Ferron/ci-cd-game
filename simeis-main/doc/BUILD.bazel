@@ -1,0 +1,15 @@
+# rendre visible le fichier source
+exports_files(["manual.typ"])
+
+# Règle genrule pour compiler le fichier Typst en PDF
+genrule(
+    name = "compile_manual", # Nouveau nom pour la cible
+    srcs = ["manual.typ"],          # Fichier(s) source(s)
+    outs = ["manual.pdf"],  # Fichier(s) de sortie (j'ai changé le nom pour éviter conflit si tu testes les deux)
+
+    # Appeler l'outil Typst importé via le MODULE.bazel
+    tools = ["@typst_linux_x64//:typst"],
+
+    # La commande shell pour utiliser Typst sur le fichier source
+    cmd = "$(location @typst_linux_x64//:typst) compile $(location manual.typ) $(OUTS)",
+)

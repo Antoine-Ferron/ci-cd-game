@@ -2,7 +2,8 @@ name: Code Quality Check
 
 on:
   pull_request:
-    branches: ["**"]
+    branches:
+      - '**'
   push:
     branches: ["main"]
 
@@ -35,6 +36,10 @@ jobs:
 
       - name: Vérifier le formatage
         run: cargo fmt --check
+
+      - name: Lancer clippy (fails on warnings)
+        run: cargo clippy --all-targets --all-features -- -D warnings
+
 
       - name: Installer cargo-tarpaulin pour la couverture
         run: cargo install cargo-tarpaulin

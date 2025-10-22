@@ -988,7 +988,7 @@ async fn tick_server(srv: GameState) -> impl web::Responder {
 #[cfg(feature = "testing")]
 #[web::get("/tick/{n}")]
 async fn tick_server_n(srv: GameState, n: Path<usize>) -> impl web::Responder {
-    let n = n.as_ref().clone();
+    let n = *n.as_ref();
     for _ in 0..n {
         let Ok(_) = srv.send_sig.send(simeis_data::game::GameSignal::Tick).await else {
             return build_response(Err(Errcode::GameSignalSend));

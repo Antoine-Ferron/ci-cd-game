@@ -1,0 +1,55 @@
+###############################################################################
+# Bazel now uses Bzlmod by default to manage external dependencies.
+# Please consider migrating your external dependencies from WORKSPACE to MODULE.bazel.
+#
+# For more details, please check https://github.com/bazelbuild/bazel/issues/18958
+###############################################################################
+
+# Declaration du module Bazel
+module(
+    name = "simeis",
+    version = "0.1.0",
+)
+
+# Déclaration des dépendances externes
+bazel_dep(name = "rules_rust", version = "0.66.0")
+bazel_dep(name = "bazel_skylib", version = "1.8.1")
+
+# Import des règles pour les archives HTTP
+http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+# On définit le dépôt @typst_linux_x64
+http_archive(
+    name = "typst_linux_x64",
+    urls = ["https://github.com/typst/typst/releases/download/v0.11.1/typst-x86_64-unknown-linux-musl.tar.xz"],
+    # Laisse vide la première fois pour que Bazel te donne le hash
+    # sha256 = "...",
+    strip_prefix = "typst-x86_64-unknown-linux-musl",
+    build_file_content = """
+package(default_visibility = ["//visibility:public"])
+exports_files(["typst"])
+""",
+)
+
+# Import des extensions pour les crates Rust
+crate = use_extension("@rules_rust//crate_universe:extensions.bzl", "crate")
+crate.from_cargo(
+    name = "crates",
+    cargo_lockfile = "//:Cargo.lock",
+    manifests = [
+        "//:Cargo.toml",  # Juste le manifest racine, comme on avait fait
+    ],
+)
+
+# On active le repo @crates defini au dessus
+use_repo(crate, "crates")
+
+# Configuration de la toolchain Rust important de préciser la version "stable" ne fonctione pas
+rust = use_extension("@rules_rust//rust:extensions.bzl", "rust")
+rust.toolchain(
+    edition = "2021",
+    versions = ["1.90.0"],
+)
+use_repo(rust, "rust_toolchains")
+
+# on enregistre la toolchain Rust pour le projet
+register_toolchains("@rust_toolchains//:all")

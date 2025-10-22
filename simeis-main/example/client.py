@@ -11,24 +11,21 @@ import urllib.parse
 PORT = 8080
 URL = f"http://127.0.0.1:{PORT}"
 
-# Codes couleurs ANSI
-GREEN = "\033[42m  \033[0m"  # carré vert
-RED = "\033[41m  \033[0m"    # carré rouge
-GREY = "\033[47m  \033[0m"   # carré gris
+# Colors
+GREEN = "\033[42m  \033[0m"  # GREEN square
+RED = "\033[41m  \033[0m"    # RED square
+GREY = "\033[47m  \033[0m"   # GREY square
 
 
 class SimeisError(Exception):
     pass
 
-
 def get_dist(a, b):
     return math.sqrt(((a[0] - b[0]) ** 2) + ((a[1] - b[1]) ** 2) + ((a[2] - b[2]) ** 2))
-
 
 def check_has(alld, key, *req):
     alltypes = [c[key] for c in alld.values()]
     return all([k in alltypes for k in req])
-
 
 class Game:
     def __init__(self, username):
