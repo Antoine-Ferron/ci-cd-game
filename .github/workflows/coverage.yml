@@ -1,0 +1,68 @@
+name: Test de couverture de code
+
+on:
+  pull_request:
+    branches:
+      - '**'
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+jobs:
+  cargo-quality:
+    name: Vérification de la couverture de code Rust
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: simeis-main
+
+    steps:
+      - name: Checkout du code
+        uses: actions/checkout@v4
+
+      - name: Installer Rust
+        run: |
+          curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain stable
+          
+          source $HOME/.cargo/env
+          
+          rustup component add clippy rustfmt
+          
+          rustc --version
+          cargo --version
+          rustfmt --version
+          cargo clippy --version
+
+      - name: Installer cargo-tarpaulin pour la couverture
+        run: cargo install cargo-tarpaulin
+
+      - name: Vérifier la couverture avec cargo-tarpaulin (JSON)
+        run: cargo tarpaulin --out Json
+
+      - name: Extraire la couverture
+        id: coverage
+        run: |
+          rate=$(jq '.coverage' tarpaulin-report.json)
+          echo "rate=$rate" >> $GITHUB_OUTPUT
+
+      - name: Trouver la PR associée
+        id: find_pr
+        run: |
+          BRANCH_NAME="${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}"
+          pr_number=$(gh pr list --head "$BRANCH_NAME" --state open --json number -q '.[0].number')
+          echo "pr_number=$pr_number" >> $GITHUB_OUTPUT
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Créer un label selon le résultat
+        if: ${{ steps.coverage.outputs.rate < 50 }}
+        run: |
+          gh pr edit "${{ steps.find_pr.outputs.pr_number }}" --add-label "not enough tests"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pas besoin de label
+        if: ${{ steps.coverage.outputs.rate >= 0.50 }}
+        run: echo "Coverage ${{ steps.coverage.outputs.rate }} is sufficient, no label added."
