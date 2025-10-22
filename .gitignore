@@ -1,1 +1,5 @@
 /arborescence.md
+/simeis-main/bazel-bin/
+/simeis-main/bazel-out/
+/simeis-main/bazel-simeis-main/
+/simeis-main/bazel-testlogs/

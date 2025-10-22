@@ -4,17 +4,42 @@ load("@rules_rust//rust:defs.bzl", "rust_binary")
 # charge les macros généré par crates_repository
 load("@crates//:defs.bzl", "all_crate_deps")
 
-# on déclare le binaire Rust pour simeis-server
 rust_binary(
     name = "simeis-server",
     srcs = glob(["src/**/*.rs"]),
 
     crate_name = "simeis_server",
 
-    # Dépend de la crate simeis-data il faut donc la déclarer ici
     deps = all_crate_deps(normal = True) + [
         "//simeis-data",
     ],
     proc_macro_deps = all_crate_deps(proc_macro = True),
     edition = "2021",
+)
+
+rust_binary(
+    name = "release_optimized",
+    srcs = glob(["src/**/*.rs"]),
+    crate_name = "simeis_server",
+
+    rustc_flags = [
+        "-C", "code-model=kernel",
+        "-C", "codegen-units=1",
+    ],
+
+    deps = all_crate_deps(normal = True) + [
+        "//simeis-data",
+    ],
+    proc_macro_deps = all_crate_deps(proc_macro = True),
+    edition = "2021",
+)
+
+genrule(
+    name = "stripped_release",
+
+    srcs = [":release_optimized"],
+
+    outs = ["simeis-server-stripped"],
+
+    cmd = "strip $(location :release_optimized) -o $@",
 )
