@@ -2,35 +2,29 @@ name: Code Quality Check
 
 on:
   pull_request:
-    branches:
-      - '**'
-  push:
-    branches:
-      - '**'
 
 jobs:
   cargo-quality:
     name: Vérification de la qualité du code Rust
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: simeis-main
+
     steps:
-      - name: Checkout du code
+      - name: On récup le repo
         uses: actions/checkout@v4
 
-      - name: Installer Rust
-        uses: actions-rs/toolchain@v1
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
         with:
-          toolchain: stable
-          components: clippy, rustfmt
-          override: true
+          toolchain: 1.90.0
 
-      - name: Vérifier la compilation
-        run: cargo check
+      - name: Install Bazel
+        uses: bazelbuild/setup-bazelisk@v3
 
-      - name: Vérifier le formatage
-        run: cargo fmt --check
-        
-      - name: Lancer clippy (fails on warnings)
-        run: cargo clippy --all-targets --all-features -- -D warnings
+      - name: Lancer les tests unitaires (et le check)
+        run: bazel test //...
+
+      - name: Vérifier le formatage (fmt)
+        run: bazel test @crates//:cargo-fmt
+
+      - name: Lancer clippy
+        run: bazel test @crates//:cargo-clippy
