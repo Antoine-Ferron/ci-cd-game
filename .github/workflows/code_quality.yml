@@ -40,7 +40,7 @@ jobs:
         run: bazel test //simeis-data:unit_tests
 
       - name: Vérifier le formatage (fmt)
-        run: bazel test @crates//:cargo-fmt
+        run: cargo fmt --all -- --check
 
       - name: Lancer clippy
-        run: bazel test @crates//:cargo-clippy
+        run: cargo clippy --all-targets --all-features -- -D warnings

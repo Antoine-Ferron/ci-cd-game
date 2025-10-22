@@ -38,9 +38,6 @@ crate.from_cargo(
     manifests = [
         "//:Cargo.toml",  # Juste le manifest racine, comme on avait fait
     ],
-
-    gen_rustfmt_test_target = "cargo-fmt",
-    gen_clippy_test_target = "cargo-clippy"
 )
 
 # On active le repo @crates defini au dessus
