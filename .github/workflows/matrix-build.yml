@@ -1,0 +1,52 @@
+name: Build Matrix
+
+on:
+  pull_request:
+    branches:
+      - [cite_start]'main' # Se déclenche sur les PR qui ciblent 'main' [cite: 120]
+
+jobs:
+  build-matrix:
+    name: Build sur ${{ matrix.os }} / Rust ${{ matrix.rust }}
+
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        rust: ['1.75.0', '1.80.0', '1.85.0', '1.88.0']
+
+      fail-fast: false
+
+    defaults:
+      run:
+        working-directory: simeis-main
+
+    steps:
+      - name: On récup le repo
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{ matrix.rust }}
+
+      - name: Install Bazel
+        uses: bazelbuild/setup-bazelisk@v3
+
+      - name: Récupérer le chemin du cache Bazel
+        id: bazel-cache
+        shell: bash
+        run: echo "dir=$(bazel info output_base)" >> $GITHUB_OUTPUT
+
+      - name: Mettre en cache Bazel
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.bazel-cache.outputs.dir }}
+          key: bazel-v1-${{ matrix.os }}-${{ matrix.rust }}-${{ hashFiles('**/MODULE.bazel.lock', '**/Cargo.lock') }}
+          restore-keys: |
+            bazel-v1-${{ matrix.os }}-${{ matrix.rust }}-
+
+      - name: Build stripped release binary
+        shell: bash
+        run: bazel build -c opt //simeis-server:stripped_release
