@@ -45,12 +45,36 @@ jobs:
           rate=$(grep -oP '<coverage[^>]*line-rate="([+-]?(?=\.\d|\d)(?:\d+)?(?:\.?\d*)(?:[Ee][+-]?\d+)?)"[^>]*>' cobertura.xml | head -1)
           echo "rate=$rate" >> $GITHUB_OUTPUT
 
-      - name: Créer un label selon le résultat
+      - name: Créer une issue si couverture faible
         if: ${{ steps.coverage.outputs.rate < 0.50 }}
-        run: gh issue edit "$NUMBER" --add-label "$LABELS"
-#        uses: actions-ecosystem/action-add-labels@v1
+        id: create_issue
+        run: |
+          issue_url=$(gh issue create \
+            --title "Faible couverture de tests (${GITHUB_SHA::7})" \
+            --body "Le commit $GITHUB_SHA a une couverture de tests de seulement ${{ steps.coverage.outputs.rate }}." \
+            --label "not enough tests" \
+            --json number,url \
+            -q '.number')
+          echo "issue_number=$issue_url" >> $GITHUB_OUTPUT
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GH_REPO: ${{ github.repository }}
-          NUMBER: ${{ github.event.issue.number }}
-          LABELS: "not enough tests"
+
+      - name: Trouver la PR associée (si elle existe)
+        id: find_pr
+        run: |
+          BRANCH_NAME="${GITHUB_REF#refs/heads/}"
+          pr_number=$(gh pr list --head "$BRANCH_NAME" --state open --json number -q '.[0].number')
+          echo "pr_number=$pr_number" >> $GITHUB_OUTPUT
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Créer un label selon le résultat
+        if: ${{ steps.coverage.outputs.rate < 0.50 && steps.find_pr.outputs.pr_number != '' }}
+        run: |
+          gh pr edit "${{ steps.find_pr.outputs.pr_number }}" --add-label "not enough tests"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pas besoin de label
+        if: ${{ steps.coverage.outputs.rate >= 0.50 }}
+        run: echo "Coverage ${{ steps.coverage.outputs.rate }} is sufficient, no label added."
