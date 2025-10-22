@@ -31,3 +31,6 @@ jobs:
 
       - name: Vérifier le formatage
         run: cargo fmt --check
+        
+      - name: Lancer clippy (fails on warnings)
+        run: cargo clippy --all-targets --all-features -- -D warnings
