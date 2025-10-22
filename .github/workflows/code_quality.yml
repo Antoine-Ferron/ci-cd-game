@@ -74,7 +74,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Créer un label selon le résultat
-        if: ${{ steps.coverage.outputs.rate < 0.50 && steps.find_pr.outputs.pr_number != '' }}
+        if: ${{ steps.coverage.outputs.rate < 50 && steps.find_pr.outputs.pr_number != '' }}
         run: |
           gh pr edit "${{ steps.find_pr.outputs.pr_number }}" --add-label "not enough tests"
         env:
