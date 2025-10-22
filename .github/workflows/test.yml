@@ -26,16 +26,31 @@ jobs:
       - name: Install Bazel
         uses: bazelbuild/setup-bazelisk@v3
 
+      - name: Récupérer le chemin du cache Bazel
+        id: bazel-cache
+        run: echo "dir=$(bazel info output_base)/external" >> $GITHUB_OUTPUT
+
+      - name: Mettre en cache les dépendances Bazel
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.bazel-cache.outputs.dir }}
+          key: bazel-v1-${{ runner.os }}-${{ hashFiles('**/MODULE.bazel.lock', '**/Cargo.lock') }}
+          restore-keys: |
+            bazel-v1-${{ runner.os }}-
+
+      - name: Compiler le serveur
+        run: bazel build //simeis-server:simeis-server
+
       - name: Démarrer le server (en arrière-plan)
         run: |
-          echo "Démarrage du serveur..."
-          bazel run //simeis-server:simeis-server > server.log 2>&1 &
+          echo "Démarrage du binaire compilé..."
+          ./bazel-bin/simeis-server/simeis-server > server.log 2>&1 &
           echo $! > server.pid
 
       - name: Attendre que le server soit prêt (Health Check)
         run: |
           echo "Attente du serveur sur localhost:8080..."
-          timeout 30 bash -c 'until curl -s http://localhost:8080 > /dev/null; do
+          timeout 60 bash -c 'until curl -s http://localhost:8080 > /dev/null; do
             echo "En attente..."
             sleep 1
           done'
@@ -44,7 +59,7 @@ jobs:
       - name: Exécuter les tests
         run: pip install -r ../tests/requirement.txt && pytest ../tests/
 
-      - name: Afficher les logs du serveur (surtout si échec)
+      - name: Afficher les logs du serveur
         if: always()
         run: |
           echo "--- Début des logs du serveur ---"
