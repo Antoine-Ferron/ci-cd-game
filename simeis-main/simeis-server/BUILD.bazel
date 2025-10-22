@@ -1,0 +1,20 @@
+# on charge les règles Bazel pour les binaires Rust
+load("@rules_rust//rust:defs.bzl", "rust_binary")
+
+# charge les macros généré par crates_repository
+load("@crates//:defs.bzl", "all_crate_deps")
+
+# on déclare le binaire Rust pour simeis-server
+rust_binary(
+    name = "simeis-server",
+    srcs = glob(["src/**/*.rs"]),
+
+    crate_name = "simeis_server",
+
+    # Dépend de la crate simeis-data il faut donc la déclarer ici
+    deps = all_crate_deps(normal = True) + [
+        "//simeis-data",
+    ],
+    proc_macro_deps = all_crate_deps(proc_macro = True),
+    edition = "2021",
+)

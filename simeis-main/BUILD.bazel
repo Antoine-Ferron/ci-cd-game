@@ -1,0 +1,3 @@
+# Vide mais nécessaire pour permettre à Bazel d'accéder
+# aux fichier Cargo.toml et Cargo.lock à la racine du projet
+
