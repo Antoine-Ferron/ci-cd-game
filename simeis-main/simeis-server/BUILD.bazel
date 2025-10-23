@@ -34,6 +34,22 @@ rust_binary(
     edition = "2021",
 )
 
+rust_binary(
+    name = "release_generic",
+    srcs = glob(["src/**/*.rs"]),
+    crate_name = "simeis_server",
+
+    rustc_flags = [
+        "-C", "codegen-units=1",
+    ],
+
+    deps = all_crate_deps(normal = True) + [
+        "//simeis-data",
+    ],
+    proc_macro_deps = all_crate_deps(proc_macro = True),
+    edition = "2021",
+)
+
 genrule(
     name = "stripped_release",
 
