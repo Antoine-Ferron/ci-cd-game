@@ -49,4 +49,4 @@ jobs:
 
       - name: Build stripped release binary
         shell: bash
-        run: bazel build -c opt //simeis-server:release_generic
+        run: bazel build -c opt simeis-server:release_generic
