@@ -31,6 +31,15 @@ jobs:
         with:
           toolchain: ${{ matrix.rust }}
 
+      - name: Forcer les fins de ligne LF (Windows Fix)
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          echo "Forçage des fins de ligne en LF..."
+          git config --global core.autocrlf false
+          git rm --cached -r .
+          git reset --hard
+
       - name: Install Bazel
         uses: bazelbuild/setup-bazelisk@v3
 
