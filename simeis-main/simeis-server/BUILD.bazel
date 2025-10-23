@@ -39,12 +39,7 @@ rust_binary(
     srcs = glob(["src/**/*.rs"]),
     crate_name = "simeis_server",
 
-    rustc_flags = ["-C", "codegen-units=1"] + select({
-        "@bazel_tools//src/conditions:windows": [
-            "-C", "link-arg=-fuse-ld=lld",
-        ],
-        "//conditions:default": [],
-    }),
+    rustc_flags = ["-C", "codegen-units=1"],
 
     deps = all_crate_deps(normal = True) + [
         "//simeis-data",
