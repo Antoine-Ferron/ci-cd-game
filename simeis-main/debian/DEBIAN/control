@@ -1,0 +1,11 @@
+Package: simeis
+Version: 0.0.0-rc0
+Section: base
+Priority: optional
+Architecture: amd64
+Maintainer: Aaron, Antoine, Joan, Gabin 
+Depends: libc6 (>= 2.31)
+Description: Simeis server
+ A small Rust-based server application built manually
+ following the TLDP Debian Binary Package HOWTO.
+
