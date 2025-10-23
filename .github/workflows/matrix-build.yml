@@ -30,6 +30,7 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: ${{ matrix.rust }}
+          components: lld
 
       - name: Forcer les fins de ligne LF (Windows Fix)
         if: runner.os == 'Windows'
