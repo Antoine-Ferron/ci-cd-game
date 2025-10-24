@@ -11,10 +11,10 @@ pub type GameState = ntex::web::types::State<Game>;
 async fn main() -> std::io::Result<()> {
     std::env::set_var("RUST_LOG", "debug");
     #[cfg(not(feature = "testing"))]
-    let port = 8080;
+    let port = 8081;
 
     #[cfg(feature = "testing")]
-    let port = 9345;
+    let port = 8081;
 
     env_logger::builder()
         .parse_default_env()

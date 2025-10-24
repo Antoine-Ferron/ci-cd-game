@@ -8,7 +8,7 @@ import string
 import urllib.request
 import urllib.parse
 
-PORT = 8080
+PORT = 8081
 URL = f"http://127.0.0.1:{PORT}"
 
 # Colors

@@ -49,8 +49,8 @@ jobs:
 
       - name: Attendre que le server soit prêt (Health Check)
         run: |
-          echo "Attente du serveur sur localhost:8080..."
-          timeout 60 bash -c 'until curl -s http://localhost:8080 > /dev/null; do
+          echo "Attente du serveur sur localhost:8081..."
+          timeout 60 bash -c 'until curl -s http://localhost:8081 > /dev/null; do
             echo "En attente..."
             sleep 1
           done'

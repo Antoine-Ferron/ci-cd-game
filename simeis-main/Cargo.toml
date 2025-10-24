@@ -2,6 +2,10 @@
 resolver = "2"
 members = ["simeis-data", "simeis-server"]
 
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+
 [workspace.dependencies]
 log = "0.4.26"
 env_logger = "0.11.6"
