@@ -81,7 +81,7 @@ jobs:
 
       - name: Build stripped release binary with Bazel
         working-directory: simeis-main
-        run: bazel build --config=opt //simeis-server:stripped_release
+        run: bazel build -c opt //simeis-server:stripped_release
 
       - name: Build documentation with Bazel
         working-directory: simeis-main
