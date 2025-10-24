@@ -1,21 +1,25 @@
-name: Build Release Assets
+name: CI & Release
 
 on:
   push:
     branches:
       - 'main'
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
 
 jobs:
-  build:
-    name: "Build release binary and doc"
+  build-and-test:
+    name: "Build & Test"
+    if: github.event_name != 'push' || !startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
-
     defaults:
       run:
         working-directory: simeis-main
-
     steps:
-      - name: On récup le repo
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Install Rust toolchain
@@ -26,11 +30,11 @@ jobs:
       - name: Install Bazel
         uses: bazelbuild/setup-bazelisk@v3
 
-      - name: Récupérer le chemin du cache Bazel
+      - name: Get Bazel cache path
         id: bazel-cache
         run: echo "dir=$(bazel info output_base)" >> $GITHUB_OUTPUT
 
-      - name: Mettre en cache Bazel (artefacts + repos)
+      - name: Cache Bazel artifacts and repositories
         uses: actions/cache@v4
         with:
           path: ${{ steps.bazel-cache.outputs.dir }}
@@ -38,8 +42,106 @@ jobs:
           restore-keys: |
             bazel-v1-${{ runner.os }}-
 
-      - name: Build stripped release binary
-        run: bazel build -c opt //simeis-server:stripped_release
+      - name: Build all project targets
+        run: bazel build //...
 
-      - name: Build documentation
+      # - name: Run tests
+      #   run: bazel test //...
+
+  create-release:
+    name: "Create Release Package"
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    needs: build-and-test # Optionnel: Assure que le build passe avant de packager
+    defaults:
+      run:
+        working-directory: ${{ github.workspace }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: 1.90.0
+
+      - name: Install Bazel
+        uses: bazelbuild/setup-bazelisk@v3
+
+      - name: Get Bazel cache path
+        id: bazel-cache
+        working-directory: simeis-main
+        run: echo "dir=$(bazel info output_base)" >> $GITHUB_OUTPUT
+
+      - name: Cache Bazel artifacts and repositories
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.bazel-cache.outputs.dir }}
+          key: bazel-v1-${{ runner.os }}-${{ hashFiles('**/MODULE.bazel.lock', '**/Cargo.lock') }}
+          restore-keys: |
+            bazel-v1-${{ runner.os }}-
+
+      - name: Build stripped release binary with Bazel
+        working-directory: simeis-main
+        run: bazel build --config=opt //simeis-server:stripped_release
+
+      - name: Build documentation with Bazel
+        working-directory: simeis-main
         run: bazel build //doc:compile_manual
+
+      - name: Install packaging dependencies
+        run: sudo apt-get update && sudo apt-get install -y tree jq xz-utils dpkg-dev zip
+
+      - name: Prepare debian package structure
+        working-directory: simeis-main
+        run: |
+          mkdir -p debian/usr/local/bin
+          mkdir -p debian/usr/share/doc/simeis
+          cp bazel-bin/simeis-server/stripped_release debian/usr/local/bin/simeis
+          cp bazel-bin/doc/manual.pdf debian/usr/share/doc/simeis/manual.pdf
+          if [ -f debian/usr/share/man/man6/simeis.6 ] && [ ! -f debian/usr/share/man/man6/simeis.6.gz ]; then gzip -f -9 debian/usr/share/man/man6/simeis.6; fi
+          [ -f debian/DEBIAN/control ] && chmod 644 debian/DEBIAN/control
+          [ -f debian/DEBIAN/postinst ] && chmod 755 debian/DEBIAN/postinst
+          tree debian || true
+
+      - name: Define package names and tag version
+        id: package-vars
+        run: |
+          TAG_NAME=${{ github.ref_name }}
+          DEB_VERSION=${TAG_NAME#v}
+          DEB_NAME="simeis_${DEB_VERSION}_amd64.deb"
+          SOURCE_ZIP_NAME="simeis_${TAG_NAME}_source.zip"
+          echo "tag_name=${TAG_NAME}" >> $GITHUB_OUTPUT
+          echo "deb_name=${DEB_NAME}" >> $GITHUB_OUTPUT
+          echo "zip_name=${SOURCE_ZIP_NAME}" >> $GITHUB_OUTPUT
+          echo "DEB_PKG_NAME=${DEB_NAME}" >> $GITHUB_ENV
+          echo "ZIP_PKG_NAME=${SOURCE_ZIP_NAME}" >> $GITHUB_ENV
+
+      - name: Build debian package
+        working-directory: simeis-main
+        run: |
+          # sed -i "s/^Version: .*/Version: ${{ steps.package-vars.outputs.tag_name.v }}/" debian/DEBIAN/control
+          dpkg-deb --build --root-owner-group debian ../${{ env.DEB_PKG_NAME }}
+          echo "Package Info:" && dpkg-deb --info ../${{ env.DEB_PKG_NAME }}
+          echo "Package Contents:" && dpkg-deb --contents ../${{ env.DEB_PKG_NAME }}
+
+      - name: Create source code archive (.zip)
+        run: |
+          git archive --format=zip --prefix=simeis-${{ steps.package-vars.outputs.tag_name }}/ \
+            -o ${{ env.ZIP_PKG_NAME }} HEAD \
+            ':!/.git' ':!/.github' ':!/bazel-*' ':!/simeis-main/bazel-*'
+          echo "Source code zip created: ${{ env.ZIP_PKG_NAME }}"
+          ls -l ${{ env.ZIP_PKG_NAME }}
+
+      - name: Create GitHub Release and Upload Assets
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.package-vars.outputs.tag_name }}
+          name: "Release ${{ steps.package-vars.outputs.tag_name }}"
+          prerelease: false
+          generate_release_notes: true
+          files: |
+            ${{ env.DEB_PKG_NAME }}
+            ${{ env.ZIP_PKG_NAME }}
