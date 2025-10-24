@@ -8,7 +8,7 @@ permissions:
   contents: write
 
 jobs:
-  build-for-debian-hihaaa:
+  build-for-debian:
     runs-on: ubuntu-latest
     env:
       REPO: ${{ github.repository }}
@@ -19,6 +19,7 @@ jobs:
       - name: Installé les dépendances
         run: |
           sudo apt-get update
+          sudo apt-get install -y tree
           sudo apt-get install -y jq xz-utils 
 
       - name: Checkout du code
@@ -33,6 +34,7 @@ jobs:
 
           [ -f debian/DEBIAN/control ] && chmod 644 debian/DEBIAN/control
           [ -f debian/DEBIAN/postinst ] && chmod 755 debian/DEBIAN/postinst
+          tree
 
       - name: Build le paquet pour debian
         run: |
