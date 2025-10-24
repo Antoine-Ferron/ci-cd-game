@@ -9,6 +9,11 @@ permissions:
 
 jobs:
   build-for-debian:
+
+    defaults:
+        run:
+          working-directory: simeis-main
+
     runs-on: ubuntu-latest
     env:
       REPO: ${{ github.repository }}
@@ -26,7 +31,6 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Preparer l'arborescence de build
-        working-directory: simeis-main
         run: |
           if [ -f debian/usr/share/man/man6/simeis.6 ] && [ ! -f debian/usr/share/man/man6/simeis.6.gz ]; then
             gzip -f debian/usr/share/man/man6/simeis.6
@@ -38,7 +42,7 @@ jobs:
 
       - name: Build le paquet pour debian
         run: |
-          dpkg-deb --build --root-owner-group debian
+          dpkg-deb --build debian
           mv debian.deb "simeis_${TAG}_amd64.deb"
           echo "PKG=simeis_${TAG}_amd64.deb" >> $GITHUB_ENV
 
@@ -46,7 +50,6 @@ jobs:
           dpkg-deb --contents "simeis_${TAG}_amd64.deb"
 
       - name: Upload .deb to the current Release (via API)
-        working-directory: src
         run: |
           TAG="$TAG"
           PKG="${PKG:-simeis_${TAG}_amd64.deb}"
