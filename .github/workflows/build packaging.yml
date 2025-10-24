@@ -1,0 +1,67 @@
+name: build-packaging
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  build-for-debian:
+    runs-on: ubuntu-latest
+
+    env:
+      REPO: ${{ github.repository }}
+      SHA:  ${{ github.sha }}
+      TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      TAG: ${{ github.ref_name }}
+
+    steps:
+      - name: Installer les dépendances
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y tree jq xz-utils dpkg-dev
+
+      - name: Checkout du code
+        uses: actions/checkout@v4
+
+      - name: Preparer l'arborescence de build
+        working-directory: simeis-main
+        run: |
+          if [ -f debian/usr/share/man/man6/simeis.6 ] && [ ! -f debian/usr/share/man/man6/simeis.6.gz ]; then
+            gzip -f debian/usr/share/man/man6/simeis.6
+          fi
+          
+          [ -f debian/DEBIAN/control ] && chmod 644 debian/DEBIAN/control
+          [ -f debian/DEBIAN/postinst ] && chmod 755 debian/DEBIAN/postinst
+          tree debian || true
+
+      - name: Build le paquet pour debian
+        working-directory: simeis-main
+        run: |
+          echo "$TAG"
+          dpkg-deb --build --root-owner-group debian
+          mv debian.deb "simeis_${TAG}_amd64.deb"
+          echo "PKG=simeis_${TAG}_amd64.deb" >> $GITHUB_ENV
+
+          dpkg-deb --info "simeis_${TAG}_amd64.deb"
+          dpkg-deb --contents "simeis_${TAG}_amd64.deb"
+
+      - name: Upload du .deb dans la release GitHub
+        working-directory: simeis-main
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          ls -l
+          PKG="simeis_${TAG}_amd64.deb"
+          UPLOAD_URL=$(jq -r '.release.upload_url' "$GITHUB_EVENT_PATH")
+          UPLOAD_URL="${UPLOAD_URL%%\{*}"
+          echo "Upload de $PKG vers $UPLOAD_URL"
+
+          curl -sSL -X POST \
+            -H "Authorization: Bearer $GITHUB_TOKEN" \
+            -H "Content-Type: application/octet-stream" \
+            --data-binary @"$PKG" \
+            "$UPLOAD_URL?name=$(basename "$PKG")"

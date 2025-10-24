@@ -1,0 +1,15 @@
+#!/bin/bash
+set -e
+
+if ! id "simeis" &>/dev/null; then
+    useradd -r -s /usr/sbin/nologin simeis
+fi
+
+chown simeis:simeis /usr/bin/simeis
+chmod 755 /usr/bin/simeis
+
+systemctl daemon-reload
+systemctl enable simeis.service
+systemctl start simeis.service
+
+exit 0
