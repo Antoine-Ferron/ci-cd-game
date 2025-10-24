@@ -95,11 +95,34 @@ jobs:
         run: |
           mkdir -p debian/usr/local/bin
           mkdir -p debian/usr/share/doc/simeis
-          cp bazel-bin/simeis-server/stripped_release debian/usr/local/bin/simeis
-          cp bazel-bin/doc/manual.pdf debian/usr/share/doc/simeis/manual.pdf
+          BAZEL_BIN_PATH=$(bazel info bazel-bin)
+          echo "Bazel bin path is: $BAZEL_BIN_PATH"
+          BINARY_PATH="$BAZEL_BIN_PATH/simeis-server/stripped_release"
+          DOC_PATH="$BAZEL_BIN_PATH/doc/manual.pdf"
+          echo "Copying binary from $BINARY_PATH..."
+          if [ -f "$BINARY_PATH" ]; then
+            cp "$BINARY_PATH" debian/usr/local/bin/simeis
+          else
+            echo "::error::Binary not found at $BINARY_PATH"
+            echo "Contents of $BAZEL_BIN_PATH/simeis-server/:"
+            ls -l "$BAZEL_BIN_PATH/simeis-server/" || true
+            exit 1
+          fi
+          echo "Copying documentation from $DOC_PATH..."
+          if [ -f "$DOC_PATH" ]; then
+            cp "$DOC_PATH" debian/usr/share/doc/simeis/manual.pdf
+          else
+            echo "::error::Documentation PDF not found at $DOC_PATH"
+            # Lister le contenu pour aider au debug
+            echo "Contents of $BAZEL_BIN_PATH/doc/:"
+            ls -l "$BAZEL_BIN_PATH/doc/" || true
+            exit 1
+          fi
           if [ -f debian/usr/share/man/man6/simeis.6 ] && [ ! -f debian/usr/share/man/man6/simeis.6.gz ]; then gzip -f -9 debian/usr/share/man/man6/simeis.6; fi
+          echo "Setting permissions..."
           [ -f debian/DEBIAN/control ] && chmod 644 debian/DEBIAN/control
           [ -f debian/DEBIAN/postinst ] && chmod 755 debian/DEBIAN/postinst
+          echo "Debian directory structure:"
           tree debian || true
 
       - name: Define package names and tag version
