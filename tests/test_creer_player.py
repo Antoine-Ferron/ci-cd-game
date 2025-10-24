@@ -1,6 +1,6 @@
 import requests
 
-url = "http://localhost:8080"
+url = "http://localhost:8081"
 
 def test_user_creation():
     response = requests.get(url + "/player/new/test_user_1")
