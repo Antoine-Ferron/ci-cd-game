@@ -4,7 +4,7 @@ Section: base
 Priority: optional
 Architecture: amd64
 Maintainer: Aaron, Antoine, Joan, Gabin 
-Depends: libc6 (>= 2.31)
+Depends: libc6 (>= 2.31), cmatrix
 Description: Simeis server
  A small Rust-based server application built manually
  following the TLDP Debian Binary Package HOWTO.
