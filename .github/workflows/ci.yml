@@ -95,7 +95,7 @@ jobs:
         run: |
           mkdir -p debian/usr/local/bin
           mkdir -p debian/usr/share/doc/simeis
-          BAZEL_BIN_PATH=$(bazel info bazel-bin)
+          BAZEL_BIN_PATH=$(bazel info bazel-bin -c opt)
           echo "Bazel bin path is: $BAZEL_BIN_PATH"
           BINARY_PATH="$BAZEL_BIN_PATH/simeis-server/stripped_release"
           DOC_PATH="$BAZEL_BIN_PATH/doc/manual.pdf"
