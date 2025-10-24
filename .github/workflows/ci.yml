@@ -85,7 +85,7 @@ jobs:
 
       - name: Build documentation with Bazel
         working-directory: simeis-main
-        run: bazel build //doc:compile_manual
+        run: bazel build -c opt //doc:compile_manual
 
       - name: Install packaging dependencies
         run: sudo apt-get update && sudo apt-get install -y tree jq xz-utils dpkg-dev zip
