@@ -97,8 +97,7 @@ jobs:
           mkdir -p debian/usr/share/doc/simeis
           BAZEL_BIN_PATH=$(bazel info bazel-bin -c opt)
           echo "Bazel bin path is: $BAZEL_BIN_PATH"
-          BINARY_PATH="$BAZEL_BIN_PATH/simeis-server/stripped_release"
-          DOC_PATH="$BAZEL_BIN_PATH/doc/manual.pdf"
+          BINARY_PATH="$BAZEL_BIN_PATH/simeis-server/simeis-server-stripped"          DOC_PATH="$BAZEL_BIN_PATH/doc/manual.pdf"
           echo "Copying binary from $BINARY_PATH..."
           if [ -f "$BINARY_PATH" ]; then
             cp "$BINARY_PATH" debian/usr/local/bin/simeis
