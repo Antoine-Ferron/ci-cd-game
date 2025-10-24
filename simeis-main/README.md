@@ -18,3 +18,8 @@ cargo run
 ```
 cargo test
 ```
+
+# Lancer le serveur
+
+```
+cargo run
