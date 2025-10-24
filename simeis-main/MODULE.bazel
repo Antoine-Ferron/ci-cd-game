@@ -36,14 +36,14 @@ crate.from_cargo(
     name = "crates",
     cargo_lockfile = "//:Cargo.lock",
     manifests = [
-        "//:Cargo.toml",  # Juste le manifest racine, comme on avait fait
+        "//:Cargo.toml",  # Juste le manifest racine
     ],
 )
 
 # On active le repo @crates defini au dessus
 use_repo(crate, "crates")
 
-# Configuration de la toolchain Rust important de préciser la version "stable" ne fonctione pas
+# Configuration de la toolchain Rust important de préciser la version car "stable" ne fonctione pas
 rust = use_extension("@rules_rust//rust:extensions.bzl", "rust")
 rust.toolchain(
     edition = "2021",
