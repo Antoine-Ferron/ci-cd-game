@@ -1,5 +1,59 @@
 name: build packaging.yml
-on:
 
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
 
 jobs:
+  build-for-debian-hihaaa:
+    runs-on: ubuntu-latest
+    env:
+      REPO: ${{ github.repository }}
+      SHA:  ${{ github.sha }}
+      EVTPATH: ${{ github.event_path }}
+      TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - name: Installé les dépendances
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq xz-utils 
+
+      - name: Checkout du code
+        uses: actions/checkout@v4
+
+      - name: Preparer l'arborescence de build
+        working-directory: simeis-main
+        run: |
+          if [ -f debian/usr/share/man/man6/simeis.6 ] && [ ! -f debian/usr/share/man/man6/simeis.6.gz ]; then
+            gzip -f debian/usr/share/man/man6/simeis.6
+          fi
+
+          [ -f debian/DEBIAN/control ] && chmod 644 debian/DEBIAN/control
+          [ -f debian/DEBIAN/postinst ] && chmod 755 debian/DEBIAN/postinst
+
+      - name: Build le paquet pour debian
+        run: |
+          dpkg-deb --build --root-owner-group debian
+          mv debian.deb "simeis_${TAG}_amd64.deb"
+          echo "PKG=simeis_${TAG}_amd64.deb" >> $GITHUB_ENV
+
+          dpkg-deb --info  "simeis_${TAG}_amd64.deb"
+          dpkg-deb --contents "simeis_${TAG}_amd64.deb"
+
+      - name: Upload .deb to the current Release (via API)
+        working-directory: src
+        run: |
+          TAG="$TAG"
+          PKG="${PKG:-simeis_${TAG}_amd64.deb}"
+          UPLOAD_URL="$(jq -r '.release.upload_url' "$GITHUB_EVENT_PATH")"
+          UPLOAD_URL="${UPLOAD_URL%%\{*}"
+          echo "Uploading $PKG to $UPLOAD_URL"
+
+          curl -sSL -X POST \
+            -H "Authorization: Bearer $TOKEN" \
+            -H "Content-Type: application/octet-stream" \
+            --data-binary @"$PKG" \
+            "$UPLOAD_URL?name=$(basename "$PKG")"
